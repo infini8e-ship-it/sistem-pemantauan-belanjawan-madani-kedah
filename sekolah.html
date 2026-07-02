@@ -1,0 +1,542 @@
+<!DOCTYPE html>
+<html lang="ms">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Pengisian Latihan — Sistem Pemantauan Belanjawan Madani Kedah</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <style>
+    body { font-family: system-ui, -apple-system, sans-serif; }
+    .spinner { animation: spin 1s linear infinite; display: inline-block; }
+    @keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
+    input[type=date]::-webkit-calendar-picker-indicator { cursor: pointer; }
+  </style>
+</head>
+<body class="bg-gray-50 min-h-screen">
+
+  <!-- Top Nav -->
+  <nav class="bg-blue-900 text-white shadow-lg sticky top-0 z-40">
+    <div class="max-w-7xl mx-auto px-4 py-3 flex justify-between items-center">
+      <div>
+        <p class="text-xs text-blue-300">Sistem Pemantauan Belanjawan Madani Kedah</p>
+        <h1 id="nav-nama" class="font-bold text-base leading-tight">Memuatkan...</h1>
+      </div>
+      <div class="flex items-center gap-3">
+        <span id="nav-daerah" class="text-xs bg-blue-700 px-3 py-1 rounded-full text-blue-200"></span>
+        <button onclick="logKeluar()" class="text-sm bg-white/15 hover:bg-white/25 px-3 py-1.5 rounded-lg transition">Log Keluar</button>
+      </div>
+    </div>
+  </nav>
+
+  <div class="max-w-7xl mx-auto px-4 py-6 space-y-6">
+
+    <!-- Belanjawan -->
+    <div class="bg-white rounded-xl shadow-sm border p-6">
+      <div class="flex justify-between items-center mb-4">
+        <h2 class="font-semibold text-gray-800">Maklumat Belanjawan</h2>
+        <span class="text-xs text-gray-400" id="info-guru"></span>
+      </div>
+      <div class="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-4">
+        <div class="bg-blue-50 rounded-xl p-4 text-center">
+          <p class="text-xs text-blue-600 mb-1">Peruntukan Diterima</p>
+          <p id="val-peruntukan" class="text-2xl font-bold text-blue-800">—</p>
+        </div>
+        <div class="bg-orange-50 rounded-xl p-4 text-center">
+          <p class="text-xs text-orange-600 mb-1">Jumlah Digunakan</p>
+          <p id="val-guna" class="text-2xl font-bold text-orange-700">—</p>
+        </div>
+        <div class="bg-green-50 rounded-xl p-4 text-center">
+          <p class="text-xs text-green-600 mb-1">Baki</p>
+          <p id="val-baki" class="text-2xl font-bold text-green-700">—</p>
+        </div>
+      </div>
+      <div class="bg-gray-200 rounded-full h-3 overflow-hidden">
+        <div id="bar-bajet" class="h-3 bg-blue-600 rounded-full transition-all duration-700" style="width:0%"></div>
+      </div>
+      <div class="flex justify-between text-xs text-gray-400 mt-1">
+        <span>RM 0</span>
+        <span id="label-peratus">0% digunakan</span>
+        <span id="label-peruntukan-max">—</span>
+      </div>
+    </div>
+
+    <!-- Status Subjek Wajib -->
+    <div class="bg-white rounded-xl shadow-sm border p-6">
+      <h2 class="font-semibold text-gray-800 mb-4">Status 5 Subjek Wajib</h2>
+      <div id="chips-subjek" class="flex flex-wrap gap-3">
+        <span class="text-gray-400 text-sm">Memuatkan...</span>
+      </div>
+    </div>
+
+    <!-- Tambah Latihan -->
+    <div class="bg-white rounded-xl shadow-sm border">
+      <div class="p-5 flex justify-between items-center">
+        <h2 class="font-semibold text-gray-800">Rekod Latihan</h2>
+        <button onclick="toggelBorang()" id="btn-togel"
+          class="bg-blue-700 text-white text-sm px-4 py-2 rounded-lg hover:bg-blue-800 transition flex items-center gap-2">
+          <span>+</span> Tambah Latihan
+        </button>
+      </div>
+
+      <!-- Borang Tambah -->
+      <div id="borang-tambah" class="hidden border-t bg-blue-50 p-6">
+        <h3 class="font-medium text-gray-700 mb-4">Borang Latihan Baharu</h3>
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <!-- Tajuk -->
+          <div class="sm:col-span-2">
+            <label class="block text-sm font-medium text-gray-700 mb-1">Tajuk Latihan <span class="text-red-500">*</span></label>
+            <input type="text" id="inp-tajuk" placeholder="Masukkan tajuk program / bengkel"
+              class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white">
+          </div>
+          <!-- Subjek -->
+          <div>
+            <label class="block text-sm font-medium text-gray-700 mb-1">Subjek Fokus <span class="text-red-500">*</span></label>
+            <div id="kawalan-subjek"></div>
+          </div>
+          <!-- Tarikh -->
+          <div>
+            <label class="block text-sm font-medium text-gray-700 mb-1">Tarikh Latihan <span class="text-red-500">*</span></label>
+            <input type="date" id="inp-tarikh"
+              class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white">
+          </div>
+          <!-- Kos -->
+          <div>
+            <label class="block text-sm font-medium text-gray-700 mb-1">Anggaran Kos (RM) <span class="text-red-500">*</span></label>
+            <input type="number" id="inp-kos" placeholder="0.00" min="0" step="0.01"
+              class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white">
+          </div>
+          <!-- Status -->
+          <div>
+            <label class="block text-sm font-medium text-gray-700 mb-1">Status</label>
+            <select id="inp-status" onchange="kemaskiniUploadBorang()"
+              class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white">
+              <option value="Dalam Pelaksanaan">Dalam Pelaksanaan</option>
+              <option value="Selesai">Selesai</option>
+            </select>
+          </div>
+          <!-- Upload -->
+          <div class="sm:col-span-2">
+            <label class="block text-sm font-medium text-gray-700 mb-1">Upload Laporan (PDF / Word)</label>
+            <div id="kawasan-upload" class="border-2 border-dashed border-gray-300 rounded-lg p-4 text-center bg-gray-50 cursor-not-allowed">
+              <input type="file" id="inp-fail" accept=".pdf,.doc,.docx" class="hidden" onchange="tunjukNamaFail(this)">
+              <div id="label-upload-borang">
+                <p class="text-gray-400 text-sm">⚠️ Upload hanya aktif apabila status <strong>Selesai</strong></p>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="flex gap-3 mt-5">
+          <button onclick="simpanLatihan()" id="btn-simpan"
+            class="bg-blue-700 text-white px-6 py-2 rounded-lg text-sm hover:bg-blue-800 transition font-medium">
+            Simpan
+          </button>
+          <button onclick="toggelBorang()"
+            class="bg-white border text-gray-600 px-6 py-2 rounded-lg text-sm hover:bg-gray-50 transition">
+            Batal
+          </button>
+        </div>
+        <p id="msg-borang" class="text-red-500 text-sm mt-2 hidden"></p>
+      </div>
+
+      <!-- Jadual Rekod -->
+      <div class="overflow-x-auto">
+        <table class="w-full text-sm">
+          <thead>
+            <tr class="bg-gray-50 border-t border-b text-gray-600 text-left">
+              <th class="px-4 py-3 w-10">Bil</th>
+              <th class="px-4 py-3">Tajuk Latihan</th>
+              <th class="px-4 py-3">Subjek</th>
+              <th class="px-4 py-3">Tarikh</th>
+              <th class="px-4 py-3 text-right">Kos (RM)</th>
+              <th class="px-4 py-3 text-center w-44">Status</th>
+              <th class="px-4 py-3 text-center">Laporan</th>
+              <th class="px-4 py-3 text-center w-28">Tindakan</th>
+            </tr>
+          </thead>
+          <tbody id="tbody-latihan">
+            <tr>
+              <td colspan="8" class="text-center py-12 text-gray-400">
+                <p class="text-4xl mb-2">📋</p>
+                <p>Tiada rekod latihan. Klik "Tambah Latihan" untuk mula.</p>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal Edit -->
+  <div id="modal-edit" class="hidden fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
+    <div class="bg-white rounded-2xl shadow-2xl w-full max-w-lg p-6">
+      <h3 class="font-semibold text-gray-800 mb-4">Edit Rekod Latihan</h3>
+      <input type="hidden" id="edit-id">
+      <div class="space-y-4">
+        <div>
+          <label class="block text-sm font-medium text-gray-700 mb-1">Tajuk Latihan</label>
+          <input type="text" id="edit-tajuk" class="w-full border rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500">
+        </div>
+        <div class="grid grid-cols-2 gap-4">
+          <div>
+            <label class="block text-sm font-medium text-gray-700 mb-1">Tarikh</label>
+            <input type="date" id="edit-tarikh" class="w-full border rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500">
+          </div>
+          <div>
+            <label class="block text-sm font-medium text-gray-700 mb-1">Anggaran Kos (RM)</label>
+            <input type="number" id="edit-kos" class="w-full border rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500" min="0" step="0.01">
+          </div>
+        </div>
+        <div>
+          <label class="block text-sm font-medium text-gray-700 mb-1">Status</label>
+          <select id="edit-status" class="w-full border rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500">
+            <option value="Dalam Pelaksanaan">Dalam Pelaksanaan</option>
+            <option value="Selesai">Selesai</option>
+          </select>
+        </div>
+      </div>
+      <div class="flex gap-3 mt-6">
+        <button onclick="simpanEdit()" class="flex-1 bg-blue-700 text-white py-2 rounded-lg text-sm hover:bg-blue-800 font-medium">Simpan</button>
+        <button onclick="tutupModal()" class="flex-1 bg-gray-100 text-gray-700 py-2 rounded-lg text-sm hover:bg-gray-200">Batal</button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const SUPABASE_URL = 'https://oyjrnfndbgcofqldamvg.supabase.co'
+    const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im95anJuZm5kYmdjb2ZxbGRhbXZnIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODI5OTYwNTYsImV4cCI6MjA5ODU3MjA1Nn0.USvlz-vOM07C0_5YprVQLUHqjQR_ShaJ6fjua-rDU7I'
+    const sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY)
+
+    const SUBJEK_WAJIB = ['Bahasa Melayu', 'Bahasa Inggeris', 'Matematik', 'Sejarah', 'Sains']
+    let sekolah = null, senaraLatihan = [], failUpload = null
+
+    async function init() {
+      const raw = localStorage.getItem('sesi_sekolah')
+      if (!raw) return window.location.href = 'index.html'
+      sekolah = JSON.parse(raw)
+      document.getElementById('nav-nama').textContent = sekolah.nama_sekolah
+      document.getElementById('nav-daerah').textContent = sekolah.daerah
+      document.getElementById('info-guru').textContent = 'Bilangan Guru: ' + sekolah.bil_guru
+      document.title = sekolah.nama_sekolah
+      await muatLatihan()
+    }
+
+    async function muatLatihan() {
+      const { data } = await sb.from('latihan')
+        .select('*, dokumen(*)')
+        .eq('sekolah_id', sekolah.id)
+        .order('created_at', { ascending: false })
+      senaraLatihan = data || []
+      renderSemua()
+    }
+
+    function renderSemua() {
+      renderBajet()
+      renderChipSubjek()
+      renderJadual()
+      renderKawalanSubjek()
+    }
+
+    function renderBajet() {
+      const guna = senaraLatihan.reduce((s, l) => s + parseFloat(l.anggaran_kos || 0), 0)
+      const baki = sekolah.bajet - guna
+      const pct = sekolah.bajet > 0 ? Math.min((guna / sekolah.bajet) * 100, 100) : 0
+
+      document.getElementById('val-peruntukan').textContent = 'RM ' + fmt(sekolah.bajet)
+      document.getElementById('val-guna').textContent = 'RM ' + fmt(guna)
+      document.getElementById('val-baki').textContent = 'RM ' + fmt(baki)
+      document.getElementById('bar-bajet').style.width = pct + '%'
+      document.getElementById('label-peratus').textContent = pct.toFixed(1) + '% digunakan'
+      document.getElementById('label-peruntukan-max').textContent = 'RM ' + fmt(sekolah.bajet)
+
+      const bar = document.getElementById('bar-bajet')
+      if (pct >= 90) bar.className = 'h-3 bg-red-500 rounded-full transition-all duration-700'
+      else if (pct >= 70) bar.className = 'h-3 bg-yellow-500 rounded-full transition-all duration-700'
+      else bar.className = 'h-3 bg-blue-600 rounded-full transition-all duration-700'
+    }
+
+    function statusSubjek(subj) {
+      const rekod = senaraLatihan.filter(l => l.subjek?.includes(subj))
+      if (!rekod.length) return 'Belum Dirancang'
+      if (rekod.some(l => l.status === 'Selesai')) return 'Selesai'
+      return 'Dalam Pelaksanaan'
+    }
+
+    function semuaWajibSelesai() {
+      return SUBJEK_WAJIB.every(s => statusSubjek(s) === 'Selesai')
+    }
+
+    function renderChipSubjek() {
+      const el = document.getElementById('chips-subjek')
+      el.innerHTML = SUBJEK_WAJIB.map(s => {
+        const st = statusSubjek(s)
+        const [bg, ikon] = st === 'Selesai'
+          ? ['bg-green-100 text-green-700 border-green-300', '✅']
+          : st === 'Dalam Pelaksanaan'
+          ? ['bg-yellow-100 text-yellow-700 border-yellow-300', '⏳']
+          : ['bg-gray-100 text-gray-500 border-gray-300', '○']
+        return `<span class="inline-flex items-center gap-2 border rounded-full px-4 py-1.5 text-sm font-medium ${bg}">
+          ${ikon} ${s}
+          <span class="font-normal text-xs">— ${st}</span>
+        </span>`
+      }).join('')
+
+      if (semuaWajibSelesai()) {
+        el.innerHTML += `<span class="inline-flex items-center gap-1 text-sm text-blue-600 font-medium ml-2">
+          🎉 Semua subjek wajib selesai! Boleh tambah subjek lain.
+        </span>`
+      }
+    }
+
+    function renderKawalanSubjek() {
+      const c = document.getElementById('kawalan-subjek')
+      const opts = SUBJEK_WAJIB.map(s => `<option value="${s}">${s}</option>`).join('')
+      if (semuaWajibSelesai()) {
+        c.innerHTML = `
+          <select id="inp-subjek" onchange="toggelSubjekLain(this)"
+            class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm bg-white focus:ring-2 focus:ring-blue-500 mb-2">
+            ${opts}
+            <option value="__lain__">── Subjek Lain (taip sendiri)</option>
+          </select>
+          <input type="text" id="inp-subjek-lain" placeholder="Nama subjek..." class="hidden w-full border border-gray-300 rounded-lg px-3 py-2 text-sm bg-white focus:ring-2 focus:ring-blue-500">`
+      } else {
+        c.innerHTML = `
+          <select id="inp-subjek"
+            class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm bg-white focus:ring-2 focus:ring-blue-500">
+            ${opts}
+          </select>
+          <p class="text-xs text-gray-400 mt-1">💡 Lengkapkan 5 subjek wajib dahulu untuk tambah subjek lain</p>`
+      }
+    }
+
+    function toggelSubjekLain(sel) {
+      const inp = document.getElementById('inp-subjek-lain')
+      if (inp) inp.classList.toggle('hidden', sel.value !== '__lain__')
+    }
+
+    function toggelBorang() {
+      const b = document.getElementById('borang-tambah')
+      b.classList.toggle('hidden')
+      if (!b.classList.contains('hidden')) renderKawalanSubjek()
+    }
+
+    function kemaskiniUploadBorang() {
+      const status = document.getElementById('inp-status').value
+      const kawasan = document.getElementById('kawasan-upload')
+      const label = document.getElementById('label-upload-borang')
+      if (status === 'Selesai') {
+        kawasan.className = 'border-2 border-dashed border-blue-400 rounded-lg p-4 text-center bg-blue-50 cursor-pointer'
+        label.innerHTML = `<label for="inp-fail" class="cursor-pointer">
+          <p class="text-blue-600 text-sm font-medium">📎 Klik untuk pilih fail laporan</p>
+          <p class="text-xs text-gray-400 mt-1">Format: .PDF, .DOC, .DOCX (maks 10MB)</p>
+        </label>`
+        document.getElementById('inp-fail').disabled = false
+      } else {
+        kawasan.className = 'border-2 border-dashed border-gray-300 rounded-lg p-4 text-center bg-gray-50 cursor-not-allowed'
+        label.innerHTML = `<p class="text-gray-400 text-sm">⚠️ Upload hanya aktif apabila status <strong>Selesai</strong></p>`
+        document.getElementById('inp-fail').disabled = true
+        failUpload = null
+      }
+    }
+
+    function tunjukNamaFail(input) {
+      if (input.files[0]) {
+        failUpload = input.files[0]
+        document.getElementById('label-upload-borang').innerHTML = `
+          <label for="inp-fail" class="cursor-pointer">
+            <p class="text-green-600 text-sm font-medium">✅ ${failUpload.name}</p>
+            <p class="text-xs text-gray-400 mt-1">Klik untuk tukar fail</p>
+          </label>`
+      }
+    }
+
+    async function simpanLatihan() {
+      const tajuk = document.getElementById('inp-tajuk').value.trim()
+      const tarikh = document.getElementById('inp-tarikh').value
+      const kos = document.getElementById('inp-kos').value
+      const status = document.getElementById('inp-status').value
+      const msgEl = document.getElementById('msg-borang')
+
+      let subjek = document.getElementById('inp-subjek')?.value || ''
+      if (subjek === '__lain__') {
+        subjek = document.getElementById('inp-subjek-lain')?.value.trim() || ''
+        if (!subjek) {
+          msgEl.textContent = 'Sila masukkan nama subjek lain.'
+          msgEl.classList.remove('hidden')
+          return
+        }
+      }
+
+      if (!tajuk || !tarikh || !kos || !subjek) {
+        msgEl.textContent = 'Sila lengkapkan semua medan bertanda *.'
+        msgEl.classList.remove('hidden')
+        return
+      }
+
+      const btn = document.getElementById('btn-simpan')
+      btn.textContent = '⏳ Menyimpan...'
+      btn.disabled = true
+
+      const { data: latBaru, error } = await sb.from('latihan').insert({
+        sekolah_id: sekolah.id,
+        nama_latihan: tajuk,
+        subjek: [subjek],
+        tarikh,
+        anggaran_kos: parseFloat(kos),
+        status
+      }).select().single()
+
+      if (error) {
+        msgEl.textContent = 'Ralat menyimpan: ' + error.message
+        msgEl.classList.remove('hidden')
+        btn.textContent = 'Simpan'
+        btn.disabled = false
+        return
+      }
+
+      if (failUpload && status === 'Selesai') {
+        await uploadFail(latBaru.id, failUpload)
+      }
+
+      msgEl.classList.add('hidden')
+      document.getElementById('borang-tambah').classList.add('hidden')
+      // Reset
+      document.getElementById('inp-tajuk').value = ''
+      document.getElementById('inp-tarikh').value = ''
+      document.getElementById('inp-kos').value = ''
+      document.getElementById('inp-status').value = 'Dalam Pelaksanaan'
+      failUpload = null
+      btn.textContent = 'Simpan'
+      btn.disabled = false
+
+      await muatLatihan()
+    }
+
+    async function uploadFail(latihanId, fail) {
+      const nama = `${latihanId}/${Date.now()}-${fail.name}`
+      const { data: up, error } = await sb.storage.from('laporan').upload(nama, fail)
+      if (error) { console.error('Upload fail:', error); return }
+      const { data: u } = sb.storage.from('laporan').getPublicUrl(nama)
+      await sb.from('dokumen').insert({ latihan_id: latihanId, fail_url: u.publicUrl, nama_fail: fail.name })
+    }
+
+    function renderJadual() {
+      const tbody = document.getElementById('tbody-latihan')
+      if (!senaraLatihan.length) {
+        tbody.innerHTML = `<tr><td colspan="8" class="text-center py-12 text-gray-400">
+          <p class="text-4xl mb-2">📋</p>
+          <p>Tiada rekod latihan. Klik "Tambah Latihan" untuk mula.</p>
+        </td></tr>`
+        return
+      }
+
+      tbody.innerHTML = senaraLatihan.map((l, i) => {
+        const stClass = l.status === 'Selesai'
+          ? 'bg-green-100 text-green-700 border-green-300'
+          : 'bg-yellow-100 text-yellow-700 border-yellow-300'
+
+        const dok = l.dokumen?.[0]
+        let laporanHtml = ''
+        if (dok) {
+          laporanHtml = `<a href="${dok.fail_url}" target="_blank" class="text-blue-600 hover:underline text-xs flex items-center justify-center gap-1">📄 ${dok.nama_fail || 'Lihat'}</a>`
+        } else if (l.status === 'Selesai') {
+          laporanHtml = `<label class="cursor-pointer text-blue-600 hover:underline text-xs flex items-center justify-center gap-1">
+            📤 Upload<input type="file" accept=".pdf,.doc,.docx" class="hidden" onchange="uploadTerus('${l.id}', this)">
+          </label>`
+        } else {
+          laporanHtml = `<span class="text-gray-300 text-xs">—</span>`
+        }
+
+        return `<tr class="border-t hover:bg-gray-50 transition" id="row-${l.id}">
+          <td class="px-4 py-3 text-gray-400 text-center">${i + 1}</td>
+          <td class="px-4 py-3 font-medium text-gray-800">${l.nama_latihan}</td>
+          <td class="px-4 py-3 text-gray-600">${l.subjek?.join(', ') || '—'}</td>
+          <td class="px-4 py-3 text-gray-600 whitespace-nowrap">${fmtTarikh(l.tarikh)}</td>
+          <td class="px-4 py-3 text-right font-medium">RM ${fmt(l.anggaran_kos)}</td>
+          <td class="px-4 py-3 text-center">
+            <select onchange="kemaskiniStatus('${l.id}', this.value)"
+              class="text-xs border rounded-full px-3 py-1 font-medium ${stClass} focus:outline-none cursor-pointer">
+              <option value="Dalam Pelaksanaan" ${l.status === 'Dalam Pelaksanaan' ? 'selected' : ''}>Dalam Pelaksanaan</option>
+              <option value="Selesai" ${l.status === 'Selesai' ? 'selected' : ''}>Selesai</option>
+            </select>
+          </td>
+          <td class="px-4 py-3 text-center">${laporanHtml}</td>
+          <td class="px-4 py-3 text-center">
+            <button onclick="bukaEdit('${l.id}')" class="text-blue-600 hover:underline text-xs mr-2">Edit</button>
+            <button onclick="padamLatihan('${l.id}')" class="text-red-500 hover:underline text-xs">Padam</button>
+          </td>
+        </tr>`
+      }).join('')
+    }
+
+    async function kemaskiniStatus(id, status) {
+      await sb.from('latihan').update({ status, updated_at: new Date().toISOString() }).eq('id', id)
+      await muatLatihan()
+    }
+
+    async function uploadTerus(latihanId, input) {
+      if (!input.files[0]) return
+      await uploadFail(latihanId, input.files[0])
+      await muatLatihan()
+    }
+
+    function bukaEdit(id) {
+      const l = senaraLatihan.find(x => x.id === id)
+      if (!l) return
+      document.getElementById('edit-id').value = l.id
+      document.getElementById('edit-tajuk').value = l.nama_latihan
+      document.getElementById('edit-tarikh').value = l.tarikh || ''
+      document.getElementById('edit-kos').value = l.anggaran_kos
+      document.getElementById('edit-status').value = l.status
+      document.getElementById('modal-edit').classList.remove('hidden')
+    }
+
+    function tutupModal() {
+      document.getElementById('modal-edit').classList.add('hidden')
+    }
+
+    async function simpanEdit() {
+      const id = document.getElementById('edit-id').value
+      const tajuk = document.getElementById('edit-tajuk').value.trim()
+      const tarikh = document.getElementById('edit-tarikh').value
+      const kos = document.getElementById('edit-kos').value
+      const status = document.getElementById('edit-status').value
+      if (!tajuk || !kos) return alert('Sila lengkapkan semua medan.')
+      await sb.from('latihan').update({
+        nama_latihan: tajuk, tarikh, anggaran_kos: parseFloat(kos), status,
+        updated_at: new Date().toISOString()
+      }).eq('id', id)
+      tutupModal()
+      await muatLatihan()
+    }
+
+    async function padamLatihan(id) {
+      if (!confirm('Padam rekod latihan ini? Tindakan ini tidak boleh dibatalkan.')) return
+      await sb.from('latihan').delete().eq('id', id)
+      await muatLatihan()
+    }
+
+    function logKeluar() {
+      localStorage.removeItem('sesi_sekolah')
+      window.location.href = 'index.html'
+    }
+
+    function fmt(n) {
+      return parseFloat(n || 0).toLocaleString('ms-MY', { minimumFractionDigits: 2, maximumFractionDigits: 2 })
+    }
+
+    function fmtTarikh(t) {
+      if (!t) return '—'
+      const d = new Date(t + 'T00:00:00')
+      return d.toLocaleDateString('ms-MY', { day: '2-digit', month: '2-digit', year: 'numeric' })
+    }
+
+    // Tutup modal bila klik luar
+    document.getElementById('modal-edit').addEventListener('click', function(e) {
+      if (e.target === this) tutupModal()
+    })
+
+    init()
+  </script>
+</body>
+</html>

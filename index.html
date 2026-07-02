@@ -1,0 +1,178 @@
+<!DOCTYPE html>
+<html lang="ms">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Log Masuk — Sistem Pemantauan Belanjawan Madani Kedah</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <style>
+    .tab-aktif { border-bottom: 3px solid #1e3a8a; color: #1e3a8a; font-weight: 600; }
+    .tab-aktif:focus { outline: none; }
+    input:focus { outline: none; }
+  </style>
+</head>
+<body class="min-h-screen bg-gradient-to-br from-blue-900 via-blue-800 to-blue-700 flex items-center justify-center p-4">
+
+  <div class="w-full max-w-md">
+    <!-- Logo & Header -->
+    <div class="text-center mb-6">
+      <div class="inline-flex items-center justify-center w-16 h-16 bg-white rounded-full shadow-lg mb-3">
+        <span class="text-3xl">🏫</span>
+      </div>
+      <h1 class="text-white text-xl font-bold">Sistem Pemantauan Belanjawan Madani</h1>
+      <p class="text-blue-200 text-sm">Jabatan Pendidikan Negeri Kedah</p>
+    </div>
+
+    <!-- Card -->
+    <div class="bg-white rounded-2xl shadow-2xl overflow-hidden">
+      <!-- Tabs -->
+      <div class="flex border-b">
+        <button onclick="tukarTab('sekolah')" id="tab-sekolah" class="flex-1 py-3 text-sm tab-aktif transition">
+          🏫 Sekolah
+        </button>
+        <button onclick="tukarTab('ppd')" id="tab-ppd" class="flex-1 py-3 text-sm text-gray-400 hover:text-gray-600 transition border-b-3">
+          🏢 PPD
+        </button>
+        <button onclick="tukarTab('jpn')" id="tab-jpn" class="flex-1 py-3 text-sm text-gray-400 hover:text-gray-600 transition">
+          🏛️ JPN
+        </button>
+      </div>
+
+      <div class="p-8">
+        <!-- Form Sekolah -->
+        <div id="form-sekolah">
+          <p class="text-sm text-gray-500 mb-5">Masukkan kod unik sekolah anda untuk log masuk.</p>
+          <div class="mb-4">
+            <label class="block text-sm font-medium text-gray-700 mb-1">Kod Sekolah</label>
+            <input type="text" id="inp-kod" placeholder="Contoh: KBA0008"
+              class="w-full border border-gray-300 rounded-lg px-4 py-2.5 text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent uppercase tracking-widest font-mono"
+              onkeydown="if(event.key==='Enter')loginSekolah()">
+          </div>
+          <button onclick="loginSekolah()" id="btn-sekolah"
+            class="w-full bg-blue-800 text-white py-2.5 rounded-lg font-medium hover:bg-blue-900 transition text-sm">
+            Log Masuk
+          </button>
+        </div>
+
+        <!-- Form PPD / JPN -->
+        <div id="form-pengguna" class="hidden">
+          <p class="text-sm text-gray-500 mb-5" id="teks-peranan">Log masuk sebagai pegawai PPD.</p>
+          <div class="mb-4">
+            <label class="block text-sm font-medium text-gray-700 mb-1">E-mel</label>
+            <input type="email" id="inp-email" placeholder="ppd.baling@kedah.edu.my"
+              class="w-full border border-gray-300 rounded-lg px-4 py-2.5 text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              onkeydown="if(event.key==='Enter')loginPengguna()">
+          </div>
+          <div class="mb-4">
+            <label class="block text-sm font-medium text-gray-700 mb-1">Kata Laluan</label>
+            <input type="password" id="inp-pass"
+              class="w-full border border-gray-300 rounded-lg px-4 py-2.5 text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              onkeydown="if(event.key==='Enter')loginPengguna()">
+          </div>
+          <button onclick="loginPengguna()" id="btn-pengguna"
+            class="w-full bg-blue-800 text-white py-2.5 rounded-lg font-medium hover:bg-blue-900 transition text-sm">
+            Log Masuk
+          </button>
+        </div>
+
+        <!-- Error message -->
+        <div id="msg-error" class="hidden mt-4 p-3 bg-red-50 border border-red-200 rounded-lg">
+          <p class="text-red-600 text-sm text-center" id="teks-error"></p>
+        </div>
+
+        <!-- Loading -->
+        <div id="msg-loading" class="hidden mt-4 text-center">
+          <p class="text-blue-600 text-sm">⏳ Mengesahkan maklumat...</p>
+        </div>
+      </div>
+    </div>
+
+    <p class="text-center text-blue-200 text-xs mt-4">© 2024 Jabatan Pendidikan Negeri Kedah</p>
+  </div>
+
+  <script>
+    const SUPABASE_URL = 'https://oyjrnfndbgcofqldamvg.supabase.co'
+    const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im95anJuZm5kYmdjb2ZxbGRhbXZnIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODI5OTYwNTYsImV4cCI6MjA5ODU3MjA1Nn0.USvlz-vOM07C0_5YprVQLUHqjQR_ShaJ6fjua-rDU7I'
+    const sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY)
+
+    let tabSemasa = 'sekolah'
+
+    function tukarTab(tab) {
+      tabSemasa = tab
+      document.querySelectorAll('[id^="tab-"]').forEach(t => {
+        t.classList.remove('tab-aktif')
+        t.classList.add('text-gray-400')
+      })
+      const el = document.getElementById('tab-' + tab)
+      el.classList.add('tab-aktif')
+      el.classList.remove('text-gray-400')
+
+      document.getElementById('form-sekolah').classList.toggle('hidden', tab !== 'sekolah')
+      document.getElementById('form-pengguna').classList.toggle('hidden', tab === 'sekolah')
+
+      if (tab === 'ppd') document.getElementById('teks-peranan').textContent = 'Log masuk sebagai pegawai PPD.'
+      if (tab === 'jpn') document.getElementById('teks-peranan').textContent = 'Log masuk sebagai pegawai JPN.'
+
+      sembunyiError()
+    }
+
+    function tunjukError(msg) {
+      document.getElementById('teks-error').textContent = msg
+      document.getElementById('msg-error').classList.remove('hidden')
+      document.getElementById('msg-loading').classList.add('hidden')
+    }
+
+    function sembunyiError() {
+      document.getElementById('msg-error').classList.add('hidden')
+    }
+
+    function tunjukLoading(benar) {
+      document.getElementById('msg-loading').classList.toggle('hidden', !benar)
+      document.getElementById('msg-error').classList.add('hidden')
+    }
+
+    async function loginSekolah() {
+      const kod = document.getElementById('inp-kod').value.trim().toUpperCase()
+      if (!kod) return tunjukError('Sila masukkan kod sekolah.')
+      tunjukLoading(true)
+
+      const { data, error } = await sb.from('sekolah').select('*').eq('kod', kod).single()
+      if (error || !data) return tunjukError('Kod sekolah tidak dijumpai. Sila semak semula.')
+
+      localStorage.setItem('sesi_sekolah', JSON.stringify(data))
+      localStorage.removeItem('sesi_pengguna')
+      window.location.href = 'sekolah.html'
+    }
+
+    async function loginPengguna() {
+      const email = document.getElementById('inp-email').value.trim().toLowerCase()
+      const pass = document.getElementById('inp-pass').value
+      if (!email || !pass) return tunjukError('Sila isi semua maklumat.')
+      tunjukLoading(true)
+
+      const { data, error } = await sb.from('pengguna').select('*').eq('email', email).eq('kata_laluan', pass).single()
+      if (error || !data) return tunjukError('E-mel atau kata laluan tidak sah.')
+
+      if (tabSemasa === 'ppd' && data.peranan !== 'PPD') return tunjukError('Akaun ini bukan untuk PPD.')
+      if (tabSemasa === 'jpn' && data.peranan !== 'JPN') return tunjukError('Akaun ini bukan untuk JPN.')
+
+      localStorage.setItem('sesi_pengguna', JSON.stringify(data))
+      localStorage.removeItem('sesi_sekolah')
+
+      window.location.href = data.peranan === 'PPD' ? 'ppd.html' : 'jpn.html'
+    }
+
+    // Semak kalau dah ada sesi
+    window.addEventListener('load', () => {
+      const sesiSekolah = localStorage.getItem('sesi_sekolah')
+      const sesiPengguna = localStorage.getItem('sesi_pengguna')
+      if (sesiSekolah) window.location.href = 'sekolah.html'
+      else if (sesiPengguna) {
+        const p = JSON.parse(sesiPengguna)
+        window.location.href = p.peranan === 'PPD' ? 'ppd.html' : 'jpn.html'
+      }
+    })
+  </script>
+</body>
+</html>
