@@ -109,20 +109,20 @@
           <!-- Status -->
           <div>
             <label class="block text-sm font-medium text-gray-700 mb-1">Status</label>
-            <select id="inp-status" onchange="kemaskiniUploadBorang()"
+            <select id="inp-status" onchange="kemaskiniDokumentasiBorang()"
               class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white">
               <option value="Dalam Pelaksanaan">Dalam Pelaksanaan</option>
               <option value="Selesai">Selesai</option>
             </select>
           </div>
-          <!-- Upload -->
+          <!-- Dokumentasi -->
           <div class="sm:col-span-2">
-            <label class="block text-sm font-medium text-gray-700 mb-1">Upload Laporan (PDF / Word)</label>
-            <div id="kawasan-upload" class="border-2 border-dashed border-gray-300 rounded-lg p-4 text-center bg-gray-50 cursor-not-allowed">
-              <input type="file" id="inp-fail" accept=".pdf,.doc,.docx" class="hidden" onchange="tunjukNamaFail(this)">
-              <div id="label-upload-borang">
-                <p class="text-gray-400 text-sm">⚠️ Upload hanya aktif apabila status <strong>Selesai</strong></p>
-              </div>
+            <label class="block text-sm font-medium text-gray-700 mb-1">URL Folder / Fail Dokumentasi</label>
+            <div id="kawasan-dokumentasi" class="border border-gray-300 rounded-lg p-4 bg-gray-50">
+              <input type="url" id="inp-url-dokumentasi" placeholder="Masukkan URL Google Drive / OneDrive / folder dokumentasi"
+                class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm bg-gray-100 text-gray-400 cursor-not-allowed"
+                disabled>
+              <p id="label-dokumentasi-borang" class="text-gray-400 text-xs mt-2">URL dokumentasi hanya aktif apabila status <strong>Selesai</strong>.</p>
             </div>
           </div>
         </div>
@@ -150,7 +150,7 @@
               <th class="px-4 py-3">Tarikh</th>
               <th class="px-4 py-3 text-right">Kos (RM)</th>
               <th class="px-4 py-3 text-center w-44">Status</th>
-              <th class="px-4 py-3 text-center">Laporan</th>
+              <th class="px-4 py-3 text-center">Dokumentasi</th>
               <th class="px-4 py-3 text-center w-28">Tindakan</th>
             </tr>
           </thead>
@@ -208,7 +208,7 @@
     const sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY)
 
     const SUBJEK_WAJIB = ['Bahasa Melayu', 'Bahasa Inggeris', 'Matematik', 'Sejarah', 'Sains']
-    let sekolah = null, senaraLatihan = [], failUpload = null
+    let sekolah = null, senaraLatihan = []
 
     async function init() {
       const raw = localStorage.getItem('sesi_sekolah')
@@ -320,34 +320,42 @@
       if (!b.classList.contains('hidden')) renderKawalanSubjek()
     }
 
-    function kemaskiniUploadBorang() {
+    function kemaskiniDokumentasiBorang() {
       const status = document.getElementById('inp-status').value
-      const kawasan = document.getElementById('kawasan-upload')
-      const label = document.getElementById('label-upload-borang')
+      const kawasan = document.getElementById('kawasan-dokumentasi')
+      const input = document.getElementById('inp-url-dokumentasi')
+      const label = document.getElementById('label-dokumentasi-borang')
       if (status === 'Selesai') {
-        kawasan.className = 'border-2 border-dashed border-blue-400 rounded-lg p-4 text-center bg-blue-50 cursor-pointer'
-        label.innerHTML = `<label for="inp-fail" class="cursor-pointer">
-          <p class="text-blue-600 text-sm font-medium">📎 Klik untuk pilih fail laporan</p>
-          <p class="text-xs text-gray-400 mt-1">Format: .PDF, .DOC, .DOCX (maks 10MB)</p>
-        </label>`
-        document.getElementById('inp-fail').disabled = false
+        kawasan.className = 'border border-blue-300 rounded-lg p-4 bg-blue-50'
+        input.disabled = false
+        input.className = 'w-full border border-blue-300 rounded-lg px-3 py-2 text-sm bg-white focus:ring-2 focus:ring-blue-500 focus:border-transparent'
+        label.innerHTML = 'Tampal URL folder atau fail dokumentasi yang boleh diakses oleh PPD/JPN.'
       } else {
-        kawasan.className = 'border-2 border-dashed border-gray-300 rounded-lg p-4 text-center bg-gray-50 cursor-not-allowed'
-        label.innerHTML = `<p class="text-gray-400 text-sm">⚠️ Upload hanya aktif apabila status <strong>Selesai</strong></p>`
-        document.getElementById('inp-fail').disabled = true
-        failUpload = null
+        kawasan.className = 'border border-gray-300 rounded-lg p-4 bg-gray-50'
+        input.value = ''
+        input.disabled = true
+        input.className = 'w-full border border-gray-300 rounded-lg px-3 py-2 text-sm bg-gray-100 text-gray-400 cursor-not-allowed'
+        label.innerHTML = 'URL dokumentasi hanya aktif apabila status <strong>Selesai</strong>.'
       }
     }
 
-    function tunjukNamaFail(input) {
-      if (input.files[0]) {
-        failUpload = input.files[0]
-        document.getElementById('label-upload-borang').innerHTML = `
-          <label for="inp-fail" class="cursor-pointer">
-            <p class="text-green-600 text-sm font-medium">✅ ${failUpload.name}</p>
-            <p class="text-xs text-gray-400 mt-1">Klik untuk tukar fail</p>
-          </label>`
+    function sahUrlDokumentasi(url) {
+      if (!url) return true
+      try {
+        const u = new URL(url)
+        return ['http:', 'https:'].includes(u.protocol)
+      } catch {
+        return false
       }
+    }
+
+    function escapeAttr(v) {
+      return String(v || '')
+        .replace(/&/g, '&amp;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#39;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
     }
 
     async function simpanLatihan() {
@@ -355,6 +363,7 @@
       const tarikh = document.getElementById('inp-tarikh').value
       const kos = document.getElementById('inp-kos').value
       const status = document.getElementById('inp-status').value
+      const urlDokumentasi = document.getElementById('inp-url-dokumentasi').value.trim()
       const msgEl = document.getElementById('msg-borang')
 
       let subjek = document.getElementById('inp-subjek')?.value || ''
@@ -369,6 +378,12 @@
 
       if (!tajuk || !tarikh || !kos || !subjek) {
         msgEl.textContent = 'Sila lengkapkan semua medan bertanda *.'
+        msgEl.classList.remove('hidden')
+        return
+      }
+
+      if (urlDokumentasi && !sahUrlDokumentasi(urlDokumentasi)) {
+        msgEl.textContent = 'Sila masukkan URL dokumentasi yang sah.'
         msgEl.classList.remove('hidden')
         return
       }
@@ -394,8 +409,8 @@
         return
       }
 
-      if (failUpload && status === 'Selesai') {
-        await uploadFail(latBaru.id, failUpload)
+      if (urlDokumentasi && status === 'Selesai') {
+        await simpanUrlDokumentasi(latBaru.id, urlDokumentasi)
       }
 
       msgEl.classList.add('hidden')
@@ -405,19 +420,28 @@
       document.getElementById('inp-tarikh').value = ''
       document.getElementById('inp-kos').value = ''
       document.getElementById('inp-status').value = 'Dalam Pelaksanaan'
-      failUpload = null
+      document.getElementById('inp-url-dokumentasi').value = ''
+      kemaskiniDokumentasiBorang()
       btn.textContent = 'Simpan'
       btn.disabled = false
 
       await muatLatihan()
     }
 
-    async function uploadFail(latihanId, fail) {
-      const nama = `${latihanId}/${Date.now()}-${fail.name}`
-      const { data: up, error } = await sb.storage.from('laporan').upload(nama, fail)
-      if (error) { console.error('Upload fail:', error); return }
-      const { data: u } = sb.storage.from('laporan').getPublicUrl(nama)
-      await sb.from('dokumen').insert({ latihan_id: latihanId, fail_url: u.publicUrl, nama_fail: fail.name })
+    async function simpanUrlDokumentasi(latihanId, url) {
+      const nilai = url.trim()
+      if (!nilai || !sahUrlDokumentasi(nilai)) {
+        alert('Sila masukkan URL dokumentasi yang sah.')
+        return false
+      }
+
+      const { data: sediaAda } = await sb.from('dokumen').select('id').eq('latihan_id', latihanId).limit(1).maybeSingle()
+      if (sediaAda) {
+        await sb.from('dokumen').update({ fail_url: nilai, nama_fail: 'Pautan Dokumentasi' }).eq('id', sediaAda.id)
+      } else {
+        await sb.from('dokumen').insert({ latihan_id: latihanId, fail_url: nilai, nama_fail: 'Pautan Dokumentasi' })
+      }
+      return true
     }
 
     function renderJadual() {
@@ -438,11 +462,13 @@
         const dok = l.dokumen?.[0]
         let laporanHtml = ''
         if (dok) {
-          laporanHtml = `<a href="${dok.fail_url}" target="_blank" class="text-blue-600 hover:underline text-xs flex items-center justify-center gap-1">📄 ${dok.nama_fail || 'Lihat'}</a>`
+          const urlDok = escapeAttr(dok.fail_url)
+          laporanHtml = `<div class="flex flex-col items-center gap-1">
+            <a href="${urlDok}" target="_blank" rel="noopener noreferrer" class="text-blue-600 hover:underline text-xs flex items-center justify-center gap-1">🔗 Lihat Dokumentasi</a>
+            <button onclick="tukarUrlDokumentasi('${l.id}')" class="text-[11px] text-gray-400 hover:text-blue-600">Tukar URL</button>
+          </div>`
         } else if (l.status === 'Selesai') {
-          laporanHtml = `<label class="cursor-pointer text-blue-600 hover:underline text-xs flex items-center justify-center gap-1">
-            📤 Upload<input type="file" accept=".pdf,.doc,.docx" class="hidden" onchange="uploadTerus('${l.id}', this)">
-          </label>`
+          laporanHtml = `<button onclick="tukarUrlDokumentasi('${l.id}', '')" class="text-blue-600 hover:underline text-xs">Tambah URL</button>`
         } else {
           laporanHtml = `<span class="text-gray-300 text-xs">—</span>`
         }
@@ -474,10 +500,13 @@
       await muatLatihan()
     }
 
-    async function uploadTerus(latihanId, input) {
-      if (!input.files[0]) return
-      await uploadFail(latihanId, input.files[0])
-      await muatLatihan()
+    async function tukarUrlDokumentasi(latihanId) {
+      const rekod = senaraLatihan.find(x => x.id === latihanId)
+      const urlSemasa = rekod?.dokumen?.[0]?.fail_url || ''
+      const url = prompt('Masukkan URL folder/fail dokumentasi:', urlSemasa)
+      if (url === null) return
+      const berjaya = await simpanUrlDokumentasi(latihanId, url)
+      if (berjaya) await muatLatihan()
     }
 
     function bukaEdit(id) {

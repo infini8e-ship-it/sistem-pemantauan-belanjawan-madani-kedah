@@ -15,7 +15,7 @@
 - Tarikh latihan (pemilih tarikh, DD/MM/YYYY)
 - Anggaran kos RM (angka, tolak dari baki bajet)
 - Status → dropdown terus dalam jadual rekod: Dalam Pelaksanaan / Selesai
-- Upload laporan (PDF/Word) → kotak upload nampak dari awal, aktif hanya bila status Selesai, terdapat arahan jika belum selesai
+- URL folder/fail dokumentasi → kotak URL nampak dari awal, aktif hanya bila status Selesai, terdapat arahan jika belum selesai
 - Semua medan boleh diedit semula selepas simpan
 - Bilangan guru — tetap dari sistem, papar sahaja, guru tidak perlu isi
 
@@ -56,6 +56,6 @@
 3. Antaramuka sekolah (pengisian)
 4. Dashboard PPD dan JPN
 5. Graf dan laporan
-6. Upload dokumen
+6. Hantar URL dokumentasi
 
 ---
