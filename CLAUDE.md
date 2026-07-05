@@ -11,7 +11,7 @@
 
 **Borang Pengisian Sekolah:**
 - Tajuk latihan (teks bebas)
-- Subjek fokus → dropdown: BM, BI, Matematik, Sejarah, Sains (wajib dahulu) → selepas 5 wajib selesai, guru boleh isi subjek lain sendiri (teks bebas, boleh berbilang)
+- Subjek fokus → dropdown: BM, BI, Matematik, Sejarah, Sains, Lain-Lain → jika pilih Lain-Lain, sekolah isi nama subjek/bidang latihan sendiri mengikut keperluan guru
 - Tarikh latihan (pemilih tarikh, DD/MM/YYYY)
 - Anggaran kos RM (angka, tolak dari baki bajet)
 - Status → dropdown terus dalam jadual rekod: Dalam Pelaksanaan / Selesai

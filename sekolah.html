@@ -262,10 +262,6 @@
       return 'Dalam Pelaksanaan'
     }
 
-    function semuaWajibSelesai() {
-      return SUBJEK_WAJIB.every(s => statusSubjek(s) === 'Selesai')
-    }
-
     function renderChipSubjek() {
       const el = document.getElementById('chips-subjek')
       el.innerHTML = SUBJEK_WAJIB.map(s => {
@@ -281,32 +277,23 @@
         </span>`
       }).join('')
 
-      if (semuaWajibSelesai()) {
-        el.innerHTML += `<span class="inline-flex items-center gap-1 text-sm text-blue-600 font-medium ml-2">
-          🎉 Semua subjek wajib selesai! Boleh tambah subjek lain.
-        </span>`
-      }
+      el.innerHTML += `<span class="inline-flex items-center gap-1 text-sm text-blue-600 font-medium ml-2">
+        + Lain-Lain boleh digunakan untuk latihan keperluan sekolah.
+      </span>`
     }
 
     function renderKawalanSubjek() {
       const c = document.getElementById('kawalan-subjek')
       const opts = SUBJEK_WAJIB.map(s => `<option value="${s}">${s}</option>`).join('')
-      if (semuaWajibSelesai()) {
-        c.innerHTML = `
-          <select id="inp-subjek" onchange="toggelSubjekLain(this)"
-            class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm bg-white focus:ring-2 focus:ring-blue-500 mb-2">
-            ${opts}
-            <option value="__lain__">── Subjek Lain (taip sendiri)</option>
-          </select>
-          <input type="text" id="inp-subjek-lain" placeholder="Nama subjek..." class="hidden w-full border border-gray-300 rounded-lg px-3 py-2 text-sm bg-white focus:ring-2 focus:ring-blue-500">`
-      } else {
-        c.innerHTML = `
-          <select id="inp-subjek"
-            class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm bg-white focus:ring-2 focus:ring-blue-500">
-            ${opts}
-          </select>
-          <p class="text-xs text-gray-400 mt-1">💡 Lengkapkan 5 subjek wajib dahulu untuk tambah subjek lain</p>`
-      }
+      c.innerHTML = `
+        <select id="inp-subjek" onchange="toggelSubjekLain(this)"
+          class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm bg-white focus:ring-2 focus:ring-blue-500 mb-2">
+          ${opts}
+          <option value="__lain__">Lain-Lain</option>
+        </select>
+        <input type="text" id="inp-subjek-lain" placeholder="Nyatakan nama subjek / bidang latihan"
+          class="hidden w-full border border-gray-300 rounded-lg px-3 py-2 text-sm bg-white focus:ring-2 focus:ring-blue-500">
+        <p class="text-xs text-gray-400 mt-1">Pilih Lain-Lain jika sekolah bercadang melaksanakan latihan untuk keperluan guru selain 5 subjek utama.</p>`
     }
 
     function toggelSubjekLain(sel) {
