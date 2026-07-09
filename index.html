@@ -100,8 +100,8 @@
               <div id="form-pengguna" class="hidden">
                 <p class="text-sm text-slate-500 mb-5" id="teks-peranan">Log masuk sebagai pegawai PPD.</p>
                 <div class="mb-4">
-                  <label class="block text-sm font-semibold text-slate-700 mb-2">E-mel</label>
-                  <input type="email" id="inp-email" placeholder="ppd@moe.gov.my"
+                  <label class="block text-sm font-semibold text-slate-700 mb-2">Nama Pengguna (ID)</label>
+                  <input type="text" id="inp-email" placeholder="ppd.kotasetar"
                     class="w-full border border-slate-300 rounded-xl px-4 py-3 text-sm focus:ring-4 focus:ring-blue-100 focus:border-blue-500 bg-slate-50"
                     onkeydown="if(event.key==='Enter')loginPengguna()">
                 </div>
@@ -156,14 +156,14 @@
       document.getElementById('form-sekolah').classList.toggle('hidden', tab !== 'sekolah')
       document.getElementById('form-pengguna').classList.toggle('hidden', tab === 'sekolah')
 
-      const inputEmail = document.getElementById('inp-email')
+      const inputUsername = document.getElementById('inp-email')
       if (tab === 'ppd') {
         document.getElementById('teks-peranan').textContent = 'Log masuk sebagai pegawai PPD.'
-        inputEmail.placeholder = 'ppd@moe.gov.my'
+        inputUsername.placeholder = 'ppd.kotasetar'
       }
       if (tab === 'jpn') {
         document.getElementById('teks-peranan').textContent = 'Log masuk sebagai pegawai JPN.'
-        inputEmail.placeholder = 'jpnkedah@moe.gov.my'
+        inputUsername.placeholder = 'jpn.kedah'
       }
 
       sembunyiError()
@@ -199,13 +199,13 @@
     }
 
     async function loginPengguna() {
-      const email = document.getElementById('inp-email').value.trim().toLowerCase()
+      const username = document.getElementById('inp-email').value.trim().toLowerCase()
       const pass = document.getElementById('inp-pass').value
-      if (!email || !pass) return tunjukError('Sila isi semua maklumat.')
+      if (!username || !pass) return tunjukError('Sila isi semua maklumat.')
       tunjukLoading(true)
 
-      const { data, error } = await sb.from('pengguna').select('*').eq('email', email).eq('kata_laluan', pass).single()
-      if (error || !data) return tunjukError('E-mel atau kata laluan tidak sah.')
+      const { data, error } = await sb.from('pengguna').select('*').eq('username', username).eq('kata_laluan', pass).single()
+      if (error || !data) return tunjukError('Nama pengguna atau kata laluan tidak sah.')
 
       if (tabSemasa === 'ppd' && data.peranan !== 'PPD') return tunjukError('Akaun ini bukan untuk PPD.')
       if (tabSemasa === 'jpn' && data.peranan !== 'JPN') return tunjukError('Akaun ini bukan untuk JPN.')
