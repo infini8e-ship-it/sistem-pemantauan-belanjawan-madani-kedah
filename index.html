@@ -185,7 +185,8 @@
     }
 
     async function loginSekolah() {
-      const kod = document.getElementById('inp-kod').value.trim().toUpperCase()
+      // Normalisasi: buang semua ruang & tukar huruf besar ("kea 1234" -> "KEA1234")
+      const kod = document.getElementById('inp-kod').value.replace(/\s+/g, '').toUpperCase()
       if (!kod) return tunjukError('Sila masukkan kod sekolah.')
       tunjukLoading(true)
 
