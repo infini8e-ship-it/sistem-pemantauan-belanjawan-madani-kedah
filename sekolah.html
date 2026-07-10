@@ -139,7 +139,7 @@
           <!-- Status -->
           <div>
             <label class="block text-sm font-medium text-gray-700 mb-1">Status</label>
-            <select id="inp-status" onchange="kemaskiniPautanBorang()"
+            <select id="inp-status"
               class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white">
               <option value="Dalam Pelaksanaan">Dalam Pelaksanaan</option>
               <option value="Selesai">Selesai</option>
@@ -151,9 +151,8 @@
             <label class="block text-sm font-medium text-gray-700 mb-1">Pautan Laporan (Google Drive)</label>
             <div id="kawasan-pautan" class="border border-gray-300 rounded-lg p-4 bg-gray-50">
               <input type="url" id="inp-pautan" placeholder="https://drive.google.com/..."
-                class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm bg-gray-100 text-gray-400 cursor-not-allowed"
-                disabled>
-              <p id="label-pautan-borang" class="text-gray-400 text-xs mt-2">Medan ini akan diaktifkan setelah status latihan ditukar kepada Selesai.</p>
+                class="w-full border border-blue-300 rounded-lg px-3 py-2 text-sm bg-white focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+              <p id="label-pautan-borang" class="text-gray-500 text-xs mt-2">Pautan boleh dimasukkan pada bila-bila masa tanpa mengubah status pelaksanaan.</p>
               <p class="text-blue-600 text-xs mt-1">Sila pastikan perkongsian fail ditetapkan kepada 'Sesiapa yang mempunyai pautan boleh lihat'.</p>
             </div>
           </div>
@@ -240,7 +239,7 @@
           </div>
           <div>
             <label class="block text-sm font-medium text-gray-700 mb-1">Status</label>
-            <select id="edit-status" onchange="kemaskiniPautanEdit()" class="w-full border rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500">
+            <select id="edit-status" class="w-full border rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500">
               <option value="Dalam Pelaksanaan">Dalam Pelaksanaan</option>
               <option value="Selesai">Selesai</option>
             </select>
@@ -249,8 +248,8 @@
         <div>
           <label class="block text-sm font-medium text-gray-700 mb-1">Pautan Laporan (Google Drive)</label>
           <input type="url" id="edit-pautan" placeholder="https://drive.google.com/..."
-            class="w-full border rounded-lg px-3 py-2 text-sm bg-gray-100 text-gray-400 cursor-not-allowed" disabled>
-          <p id="edit-label-pautan" class="text-gray-400 text-xs mt-1">Medan ini akan diaktifkan setelah status latihan ditukar kepada Selesai.</p>
+            class="w-full border border-blue-300 rounded-lg px-3 py-2 text-sm bg-white focus:ring-2 focus:ring-blue-500">
+          <p id="edit-label-pautan" class="text-gray-500 text-xs mt-1">Pautan boleh dimasukkan pada bila-bila masa tanpa mengubah status pelaksanaan.</p>
           <p class="text-blue-600 text-xs mt-1">Sila pastikan perkongsian fail ditetapkan kepada 'Sesiapa yang mempunyai pautan boleh lihat'.</p>
         </div>
       </div>
@@ -421,24 +420,14 @@
     }
 
     function kemaskiniPautanBorang() {
-      const status = document.getElementById('inp-status').value
       const kawasan = document.getElementById('kawasan-pautan')
       const input = document.getElementById('inp-pautan')
       const label = document.getElementById('label-pautan-borang')
-      if (status === 'Selesai') {
-        kawasan.className = 'border border-blue-300 rounded-lg p-4 bg-blue-50'
-        input.disabled = false
-        input.className = 'w-full border border-blue-300 rounded-lg px-3 py-2 text-sm bg-white focus:ring-2 focus:ring-blue-500 focus:border-transparent'
-        label.textContent = 'Tampal pautan Google Drive laporan latihan.'
-        label.className = 'text-gray-500 text-xs mt-2'
-      } else {
-        kawasan.className = 'border border-gray-300 rounded-lg p-4 bg-gray-50'
-        input.value = ''
-        input.disabled = true
-        input.className = 'w-full border border-gray-300 rounded-lg px-3 py-2 text-sm bg-gray-100 text-gray-400 cursor-not-allowed'
-        label.textContent = 'Medan ini akan diaktifkan setelah status latihan ditukar kepada Selesai.'
-        label.className = 'text-gray-400 text-xs mt-2'
-      }
+      kawasan.className = 'border border-blue-300 rounded-lg p-4 bg-blue-50'
+      input.disabled = false
+      input.className = 'w-full border border-blue-300 rounded-lg px-3 py-2 text-sm bg-white focus:ring-2 focus:ring-blue-500 focus:border-transparent'
+      label.textContent = 'Pautan boleh dimasukkan pada bila-bila masa tanpa mengubah status pelaksanaan.'
+      label.className = 'text-gray-500 text-xs mt-2'
     }
 
     // Pengesahan pautan: mesti https://. Bukan domain Google -> amaran ringan tetapi benarkan.
@@ -515,7 +504,7 @@
         tarikh_akhir: tarikhAkhir,
         anggaran_kos: kosNum,
         status,
-        pautan_laporan: (status === 'Selesai' && pautan) ? pautan : null
+        pautan_laporan: pautan || null
       })
 
       btn.textContent = 'Simpan'
@@ -567,10 +556,8 @@
             <a href="${url}" target="_blank" rel="noopener noreferrer" class="text-blue-600 hover:underline text-xs flex items-center justify-center gap-1">🔗 Buka Laporan</a>
             <button onclick="tukarPautan('${l.id}')" class="text-[11px] text-gray-400 hover:text-blue-600">Tukar Pautan</button>
           </div>`
-        } else if (l.status === 'Selesai') {
-          pautanHtml = `<button onclick="tukarPautan('${l.id}')" class="text-blue-600 hover:underline text-xs">Tambah Pautan</button>`
         } else {
-          pautanHtml = `<span class="text-gray-300 text-xs" title="Medan ini akan diaktifkan setelah status latihan ditukar kepada Selesai.">—</span>`
+          pautanHtml = `<button onclick="tukarPautan('${l.id}')" class="text-blue-600 hover:underline text-xs">Tambah Pautan</button>`
         }
 
         return `<tr class="border-t hover:bg-gray-50 transition" id="row-${l.id}">
@@ -603,10 +590,6 @@
     async function tukarPautan(id) {
       const rekod = senaraLatihan.find(x => x.id === id)
       if (!rekod) return
-      if (rekod.status !== 'Selesai') {
-        alert('Medan ini akan diaktifkan setelah status latihan ditukar kepada Selesai.')
-        return
-      }
       const url = prompt("Masukkan pautan laporan Google Drive.\nSila pastikan perkongsian fail ditetapkan kepada 'Sesiapa yang mempunyai pautan boleh lihat'.", rekod.pautan_laporan || '')
       if (url === null) return
       const nilai = url.trim()
@@ -670,20 +653,12 @@
     }
 
     function kemaskiniPautanEdit() {
-      const status = document.getElementById('edit-status').value
       const input = document.getElementById('edit-pautan')
       const label = document.getElementById('edit-label-pautan')
-      if (status === 'Selesai') {
-        input.disabled = false
-        input.className = 'w-full border border-blue-300 rounded-lg px-3 py-2 text-sm bg-white focus:ring-2 focus:ring-blue-500'
-        label.textContent = 'Tampal pautan Google Drive laporan latihan.'
-        label.className = 'text-gray-500 text-xs mt-1'
-      } else {
-        input.disabled = true
-        input.className = 'w-full border rounded-lg px-3 py-2 text-sm bg-gray-100 text-gray-400 cursor-not-allowed'
-        label.textContent = 'Medan ini akan diaktifkan setelah status latihan ditukar kepada Selesai.'
-        label.className = 'text-gray-400 text-xs mt-1'
-      }
+      input.disabled = false
+      input.className = 'w-full border border-blue-300 rounded-lg px-3 py-2 text-sm bg-white focus:ring-2 focus:ring-blue-500'
+      label.textContent = 'Pautan boleh dimasukkan pada bila-bila masa tanpa mengubah status pelaksanaan.'
+      label.className = 'text-gray-500 text-xs mt-1'
     }
 
     function tutupModal() {
@@ -718,7 +693,7 @@
       const kosNum = parseFloat(kos)
       if (!kos || isNaN(kosNum) || kosNum <= 0) return ralat('Anggaran kos mesti nombor positif.')
 
-      const semakan = semakPautan(status === 'Selesai' ? pautan : '')
+      const semakan = semakPautan(pautan)
       if (!semakan.sah) return ralat(semakan.amaran)
       if (semakan.amaran) alert(semakan.amaran)
 
@@ -737,7 +712,7 @@
         tarikh_akhir: tarikhAkhir,
         anggaran_kos: kosNum,
         status,
-        pautan_laporan: (status === 'Selesai' && pautan) ? pautan : null,
+        pautan_laporan: pautan || null,
         updated_at: new Date().toISOString()
       }).eq('id', id)
 
