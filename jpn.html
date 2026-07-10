@@ -141,6 +141,7 @@
           <table class="w-full text-sm">
             <thead>
               <tr class="bg-gray-50 border-b text-gray-600 text-left">
+                <th class="px-3 py-3 text-center w-14">Bil.</th>
                 <th class="px-4 py-3">Sekolah</th>
                 <th class="px-4 py-3">Daerah</th>
                 <th class="px-4 py-3 text-center">Guru</th>
@@ -154,7 +155,7 @@
               </tr>
             </thead>
             <tbody id="tbody-semua-sekolah">
-              <tr><td colspan="10" class="text-center py-10 text-gray-400">⏳ Memuatkan...</td></tr>
+              <tr><td colspan="11" class="text-center py-10 text-gray-400">⏳ Memuatkan...</td></tr>
             </tbody>
           </table>
         </div>
@@ -491,15 +492,16 @@
     function renderJadualSekolah() {
       const tbody = document.getElementById('tbody-semua-sekolah')
       if (!sekolahFilter.length) {
-        tbody.innerHTML = '<tr><td colspan="10" class="text-center py-8 text-gray-400">Tiada sekolah.</td></tr>'
+        tbody.innerHTML = '<tr><td colspan="11" class="text-center py-8 text-gray-400">Tiada sekolah.</td></tr>'
         return
       }
-      tbody.innerHTML = sekolahFilter.map(sk => {
+      tbody.innerHTML = sekolahFilter.map((sk, i) => {
         const guna = gunaSekolah(sk.id)
         const pct = sk.bajet > 0 ? (guna / sk.bajet * 100) : 0
         const barColor = pct >= 90 ? 'bg-red-500' : pct >= 70 ? 'bg-yellow-500' : 'bg-green-500'
         const chips = SUBJEK_WAJIB.map(s => `<td class="px-2 py-3 text-center">${chipSubjek(statusSubjek(sk.id, s))}</td>`).join('')
         return `<tr class="border-t hover:bg-gray-50">
+          <td class="px-3 py-3 text-center text-sm font-medium text-gray-500">${i + 1}</td>
           <td class="px-4 py-3">
             <p class="font-medium text-gray-800 text-xs">${escapeHtml(sk.nama_sekolah)} <span class="text-gray-400 font-normal">(${escapeHtml(sk.kod)})</span></p>
             <div class="flex items-center gap-1 mt-1">
