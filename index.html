@@ -8,7 +8,12 @@
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <style>
     body { font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; }
-    .tab-aktif { background: #1d4ed8; color: #ffffff; box-shadow: 0 10px 24px rgba(29, 78, 216, .22); }
+    .tab-aktif,
+    .tab-aktif:hover {
+      background: #1d4ed8 !important;
+      color: #ffffff !important;
+      box-shadow: 0 10px 24px rgba(29, 78, 216, .22);
+    }
     .tab-aktif:focus { outline: none; }
     input:focus { outline: none; }
     .kpm-bg {
